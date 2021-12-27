@@ -22,7 +22,9 @@ public class Condition {
             "supeq", ">=",
             "infeq", "<=",
             "contains", "LIKE",
-            "necontains", "NOT LIKE"
+            "necontains", "NOT LIKE",
+            "jsoncontains", "JSON_CONTAINS({column},{value})",
+            "nejsoncontains", "!JSON_CONTAINS({column},{value})"
     );
 
     private final String key;
@@ -71,10 +73,14 @@ public class Condition {
 
         if ( this.values.size() > 1 ) {
             for ( int i = 0; i < this.values.size(); i++ ) {
-                final String operator  = this.getSqlOperator( this.values.get( i ) );
                 final String parameter = "key" + keyIncrement++;
 
-                condition.append( this.key + " " + operator + " " + this.getParameter( this.values.get( i ), operator, parameter ) );
+                if ( !isFunction( operator ) ) {
+                    final String operator = this.getSqlOperator( this.values.get( i ), parameter );
+                    condition.append( this.key + " " + operator + " " + this.getParameter( this.values.get( i ), operator, parameter ) );
+                } else {
+                    condition.append( getFunction( values.get( i ), parameter ) );
+                }
 
 
                 if ( i < this.values.size() - 1 ) {
@@ -85,12 +91,13 @@ public class Condition {
             return condition.append( " )" ).toString();
         }
 
-
-        return this.key + " " + this.getSqlOperator( this.values.get( 0 ) ) + " " + this.getParameter( this.values.get( 0 ), this.operator, "key" + keyIncrement );
+        return !isFunction( operator )
+                ? this.key + " " + this.getSqlOperator( this.values.get( 0 ), "key" + keyIncrement ) + " " + this.getParameter( this.values.get( 0 ), this.operator, "key" + keyIncrement )
+                : getFunction( values.get( 0 ), "key" + keyIncrement );
     }
 
 
-    private String getSqlOperator( final String value ) throws NotSupportedOperator {
+    private String getSqlOperator( final String value, String parameter ) throws NotSupportedOperator {
         if ( !Condition.OPERATOR.containsKey( this.operator ) ) {
             throw new NotSupportedOperator( this.operator );
         }
@@ -117,5 +124,20 @@ public class Condition {
         }
 
         return "";
+    }
+
+
+    private String getFunction( String value, String parameter ) throws NotSupportedOperator {
+        if ( !Condition.OPERATOR.containsKey( this.operator ) ) {
+            throw new NotSupportedOperator( this.operator );
+        }
+
+        this.parameters.put( parameter, value );
+        return Condition.OPERATOR.get( this.operator ).replace( "{column}", this.key ).replace( "{value}", ":" + parameter );
+    }
+
+
+    private boolean isFunction( String operator ) {
+        return operator.contains( "json" );
     }
 }

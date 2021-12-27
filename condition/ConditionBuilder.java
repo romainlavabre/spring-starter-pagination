@@ -15,14 +15,19 @@ public class ConditionBuilder {
     public static List< Condition > getConditions( final Request request ) {
 
 
-        final String            queryString  = request.getRawQueryString();
-        final String[]          queryStrings = queryString.split( "&" );
-        final List< Condition > result       = new ArrayList<>();
+        final List< Condition > result      = new ArrayList<>();
+        final String            queryString = request.getRawQueryString();
+
+        if ( queryString == null ) {
+            return result;
+        }
+
+        final String[] queryStrings = queryString.split( "&" );
 
         for ( int i = 0; i < queryStrings.length; i++ ) {
             queryStrings[ i ] = URLDecoder.decode( queryStrings[ i ], StandardCharsets.UTF_8 );
 
-            if ( !queryStrings[ i ].matches( "[a-zA-Z0-9]+\\[[a-z]+\\]=.+" ) ) {
+            if ( !queryStrings[ i ].matches( "[a-zA-Z0-9_]+\\[[a-z]+\\]=.+" ) ) {
                 continue;
             }
 
