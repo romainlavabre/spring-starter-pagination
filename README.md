@@ -259,6 +259,10 @@ Warning ! The parameters must be encoded, at the risk of receiving a 400 error
 
 ### Versions
 
+##### 1.0.1
+
+- ADD Support snack & camel case parameters 
+
 ##### 1.0.0
 
 INITIAL
