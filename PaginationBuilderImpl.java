@@ -37,7 +37,7 @@ public class PaginationBuilderImpl implements PaginationBuilder {
         final List< Condition > conditions = ConditionBuilder.getConditions( request );
         final Query             query      = QueryBuilder.build( request, conditions, view );
 
-        final int perPage = Integer.parseInt( request.getQueryString( "perPage" ) );
+        final int perPage = Integer.parseInt( request.getQueryString( "perPage" ) != null ? request.getQueryString( "perPage" ) : request.getQueryString( "per_page" ) );
         final int page    = Integer.parseInt( request.getQueryString( "page" ) );
         final int offset  = this.getOffset( perPage, page );
 
