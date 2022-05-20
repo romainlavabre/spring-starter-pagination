@@ -14,18 +14,22 @@ import java.util.Map;
  */
 public class Condition {
 
-    protected static final Map< String, String > OPERATOR = Map.of(
-            "eq", "=",
-            "ne", "!=",
-            "sup", ">",
-            "inf", "<",
-            "supeq", ">=",
-            "infeq", "<=",
-            "contains", "LIKE",
-            "necontains", "NOT LIKE",
-            "jsoncontains", "JSON_CONTAINS({column},{value})",
-            "nejsoncontains", "!JSON_CONTAINS({column},{value})"
-    );
+    protected static final Map< String, String > OPERATOR;
+
+    static {
+        OPERATOR = new HashMap<>();
+        OPERATOR.put( "eq", "=" );
+        OPERATOR.put( "ne", "!=" );
+        OPERATOR.put( "sup", ">" );
+        OPERATOR.put( "inf", "<" );
+        OPERATOR.put( "supeq", ">=" );
+        OPERATOR.put( "infeq", "<=" );
+        OPERATOR.put( "contains", "LIKE" );
+        OPERATOR.put( "necontains", "NOT LIKE" );
+        OPERATOR.put( "startwith", "LIKE" );
+        OPERATOR.put( "jsoncontains", "JSON_CONTAINS({column},{value})" );
+        OPERATOR.put( "nejsoncontains", "!JSON_CONTAINS({column},{value})" );
+    }
 
     private final String key;
 
@@ -117,6 +121,9 @@ public class Condition {
     private String getParameter( final String value, final String operator, final String parameter ) {
         if ( operator.contains( "contains" ) ) {
             this.parameters.put( parameter, "%" + value + "%" );
+            return ":" + parameter;
+        } else if ( operator.contains( "startwith" ) ) {
+            this.parameters.put( parameter, value + "%" );
             return ":" + parameter;
         } else if ( !value.toUpperCase().equals( "NULL" ) ) {
             this.parameters.put( parameter, value );
