@@ -22,8 +22,8 @@ done
 CLASSES=(
     "$1/Constraint.java"
     "$1/Pagination.java"
-    "$1/PaginationBuilder.java"
-    "$1/PaginationBuilderImpl.java"
+    "$1/PaginationHandler.java"
+    "$1/PaginationHandlerImpl.java"
     "$1/query/Query.java"
     "$1/query/QueryBuilder.java"
     "$1/exception/NotSupportedKey.java"
@@ -31,6 +31,8 @@ CLASSES=(
     "$1/exception/NotSupportedValue.java"
     "$1/condition/Condition.java"
     "$1/condition/ConditionBuilder.java"
+    "$1/rt/RealTime.java"
+    "$1/rt/RealTimeJpa.java"
 )
 
 for CLASS in "${CLASSES[@]}"; do

@@ -14,8 +14,8 @@ To create a DTO, nothing could be simpler, annotate the header of your class @En
 And finally, specify the identifier with @Id. But you already know all this ...
 
 ```java
-import com.fairfair.data_repository.api.json.annotation.Group;
-import com.fairfair.data_repository.api.json.annotation.Json;
+import com.replace.replace.api.json.annotation.Group;
+import com.replace.replace.api.json.annotation.Json;
 import org.hibernate.annotations.Immutable;
 
 import javax.persistence.Entity;
@@ -58,14 +58,14 @@ If you are using another implementation, you need to find an alternative
 After creating the DTO, create the controller
 
 ```java
-import com.fairfair.data_repository.api.pagination.Pagination;
-import com.fairfair.data_repository.api.pagination.PaginationBuilder;
-import com.fairfair.data_repository.api.pagination.exception.NotSupportedKey;
-import com.fairfair.data_repository.api.pagination.exception.NotSupportedOperator;
-import com.fairfair.data_repository.api.pagination.exception.NotSupportedValue;
-import com.fairfair.data_repository.api.request.Request;
-import com.fairfair.data_repository.module.pagination.dto.Company;
-import com.fairfair.data_repository.configuration.json.GroupType;
+import com.replace.replace.api.pagination.Pagination;
+import com.replace.replace.api.pagination.PaginationBuilder;
+import com.replace.replace.api.pagination.exception.NotSupportedKey;
+import com.replace.replace.api.pagination.exception.NotSupportedOperator;
+import com.replace.replace.api.pagination.exception.NotSupportedValue;
+import com.replace.replace.api.request.Request;
+import com.replace.replace.module.pagination.dto.Company;
+import com.replace.replace.configuration.json.GroupType;
 
 
 import java.util.Map;
