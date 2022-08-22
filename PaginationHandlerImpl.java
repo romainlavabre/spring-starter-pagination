@@ -86,7 +86,7 @@ public class PaginationHandlerImpl implements PaginationHandler {
         }
 
         query
-                .append( conditions.toString() )
+                .append( conditions.toString() + ")" )
                 .append( " AND updated_at >= " )
                 .append( "\"" + superiorAt + "\"" )
                 .append( " LIMIT 1" );
