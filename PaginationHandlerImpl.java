@@ -69,7 +69,7 @@ public class PaginationHandlerImpl implements PaginationHandler {
     @Override
     public boolean hasBeenUpdated( Request request, List< String > followedTables ) {
         String        superiorAt = ( String ) request.getParameter( "pagination_superior_at" );
-        StringBuilder query      = new StringBuilder( "SELECT * FROM pagination_real_time WHERE " );
+        StringBuilder query      = new StringBuilder( "SELECT * FROM pagination_real_time WHERE (" );
         StringJoiner  conditions = new StringJoiner( " OR " );
 
         for ( String table : followedTables ) {
