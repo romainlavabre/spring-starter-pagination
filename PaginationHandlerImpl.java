@@ -69,11 +69,20 @@ public class PaginationHandlerImpl implements PaginationHandler {
     @Override
     public boolean hasBeenUpdated( Request request, List< String > followedTables ) {
         String        superiorAt = ( String ) request.getParameter( "pagination_superior_at" );
-        StringBuilder query      = new StringBuilder( "SELECT * FROM pagination_real_time WHERE (" );
+        StringBuilder query      = new StringBuilder( "SELECT * FROM pagination_real_time WHERE " );
         StringJoiner  conditions = new StringJoiner( " OR " );
+        boolean       hasValue   = false;
 
         for ( String table : followedTables ) {
             List< Object > ids = request.getParameters( "pagination_" + table );
+
+            if ( ids == null || ids.size() == 0 ) {
+                continue;
+            }
+
+            if ( !hasValue ) {
+                hasValue = true;
+            }
 
             StringJoiner stringJoiner = new StringJoiner( "," );
 
@@ -86,10 +95,14 @@ public class PaginationHandlerImpl implements PaginationHandler {
         }
 
         query
-                .append( conditions.toString() + ")" )
+                .append( "( " + conditions.toString() + " )" )
                 .append( " AND updated_at >= " )
                 .append( "\"" + superiorAt + "\"" )
                 .append( " LIMIT 1" );
+
+        if ( !hasValue ) {
+            return false;
+        }
 
         final javax.persistence.Query persistentQuery =
                 this.entityManager.createNativeQuery( query.toString(), RealTime.class );
