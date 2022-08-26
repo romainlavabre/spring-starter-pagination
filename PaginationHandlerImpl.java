@@ -1,5 +1,6 @@
 package com.replace.replace.api.pagination;
 
+import com.replace.replace.api.environment.Environment;
 import com.replace.replace.api.pagination.condition.Condition;
 import com.replace.replace.api.pagination.condition.ConditionBuilder;
 import com.replace.replace.api.pagination.exception.NotSupportedKey;
@@ -10,11 +11,13 @@ import com.replace.replace.api.pagination.query.QueryBuilder;
 import com.replace.replace.api.pagination.rt.RealTime;
 import com.replace.replace.api.pagination.rt.RealTimeJpa;
 import com.replace.replace.api.request.Request;
+import com.replace.replace.configuration.environment.Variable;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -25,13 +28,16 @@ import java.util.StringJoiner;
 @Service
 public class PaginationHandlerImpl implements PaginationHandler {
 
-    protected final EntityManager entityManager;
-    protected final RealTimeJpa   realTimeJpa;
+    protected final EntityManager             entityManager;
+    protected final RealTimeJpa               realTimeJpa;
+    protected final Environment               environment;
+    protected final Map< String, QueryCount > COUNT_QUERY_CACHE = new HashMap<>();
 
 
-    public PaginationHandlerImpl( final EntityManager entityManager, RealTimeJpa realTimeJpa ) {
+    public PaginationHandlerImpl( final EntityManager entityManager, RealTimeJpa realTimeJpa, Environment environment ) {
         this.entityManager = entityManager;
         this.realTimeJpa   = realTimeJpa;
+        this.environment   = environment;
     }
 
 
@@ -136,13 +142,31 @@ public class PaginationHandlerImpl implements PaginationHandler {
 
 
     protected int executeCountQuery( final Query query ) {
-        final javax.persistence.Query persistentQuery = this.entityManager.createNativeQuery( query.getCountQuery() );
+        String countQuery = query.getCountQuery();
+
+        final javax.persistence.Query persistentQuery = this.entityManager.createNativeQuery( countQuery );
+
+        String computedQuery = countQuery;
 
         for ( final Map.Entry< String, String > entry : query.getParameters().entrySet() ) {
             persistentQuery.setParameter( entry.getKey(), entry.getValue() );
+            computedQuery = computedQuery.replace( ":" + entry.getKey(), entry.getValue() );
         }
 
-        return Integer.parseInt( String.valueOf( persistentQuery.getResultList().get( 0 ) ) );
+
+        if ( COUNT_QUERY_CACHE.containsKey( computedQuery ) ) {
+            QueryCount queryCount = COUNT_QUERY_CACHE.get( computedQuery );
+
+            if ( queryCount.isValid() ) {
+                return queryCount.getResult();
+            }
+        }
+
+        int result = Integer.parseInt( String.valueOf( persistentQuery.getResultList().get( 0 ) ) );
+
+        COUNT_QUERY_CACHE.put( computedQuery, new QueryCount( result ) );
+
+        return result;
     }
 
 
@@ -178,6 +202,35 @@ public class PaginationHandlerImpl implements PaginationHandler {
 
         if ( request.getQueryString( "sortBy" ) == null ) {
             request.setQueryString( "sortBy", "id" );
+        }
+    }
+
+
+    private class QueryCount {
+        private int result;
+
+        private final ZonedDateTime generatedAt;
+
+
+        public QueryCount( int result ) {
+            this.result = result;
+            generatedAt = ZonedDateTime.now( ZoneOffset.UTC );
+        }
+
+
+        public int getResult() {
+            return result;
+        }
+
+
+        public ZonedDateTime getGeneratedAt() {
+            return generatedAt;
+        }
+
+
+        public boolean isValid() {
+            return generatedAt.plusSeconds( environment.getEnv( Variable.PAGINATION_COUNT_CACHE_SECONDS ) != null ? Long.parseLong( environment.getEnv( Variable.PAGINATION_COUNT_CACHE_SECONDS ) ) : 30 ).toEpochSecond()
+                    > ZonedDateTime.now( ZoneOffset.UTC ).toEpochSecond();
         }
     }
 }
