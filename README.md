@@ -1,6 +1,5 @@
 # Pagination
 
-
 This documentation will show you how to create a dedicated paging DTO.
 Then consume the API.
 
@@ -9,8 +8,8 @@ Otherwise you will certainly have to adapt the first part.
 
 ### Data transfer object
 
-
-To create a DTO, nothing could be simpler, annotate the header of your class @Entity, then @Immutable, specify the name of the view: @Table.
+To create a DTO, nothing could be simpler, annotate the header of your class @Entity, then @Immutable, specify the name
+of the view: @Table.
 And finally, specify the identifier with @Id. But you already know all this ...
 
 ```java
@@ -18,9 +17,9 @@ import com.replace.replace.api.json.annotation.Group;
 import com.replace.replace.api.json.annotation.Json;
 import org.hibernate.annotations.Immutable;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 
 /**
@@ -47,13 +46,11 @@ public class Company {
 }
 ```
 
-
 You will notice that the @Immutable annotation is specific to hibernate.
 
 If you are using another implementation, you need to find an alternative
 
 ### Controller
-
 
 After creating the DTO, create the controller
 
@@ -113,7 +110,6 @@ public class PaginationController {
 3: View name
 
 ### Consume API
-
 
 To consume the API, you will have to send your parameters in the url, the parameters are in the following format:
 
@@ -259,9 +255,13 @@ Warning ! The parameters must be encoded, at the risk of receiving a 400 error
 
 ### Versions
 
+##### 3.0.0
+
+- Migrate to jakarta
+
 ##### 1.0.1
 
-- ADD Support snack & camel case parameters 
+- ADD Support snack & camel case parameters
 
 ##### 1.0.0
 

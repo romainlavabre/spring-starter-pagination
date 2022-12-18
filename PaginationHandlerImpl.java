@@ -12,9 +12,9 @@ import com.replace.replace.api.pagination.rt.RealTime;
 import com.replace.replace.api.pagination.rt.RealTimeJpa;
 import com.replace.replace.api.request.Request;
 import com.replace.replace.configuration.environment.Variable;
+import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
@@ -110,7 +110,7 @@ public class PaginationHandlerImpl implements PaginationHandler {
             return false;
         }
 
-        final javax.persistence.Query persistentQuery =
+        final jakarta.persistence.Query persistentQuery =
                 this.entityManager.createNativeQuery( query.toString(), RealTime.class );
 
         boolean result = persistentQuery.getResultList().size() == 1;
@@ -121,7 +121,7 @@ public class PaginationHandlerImpl implements PaginationHandler {
 
 
     protected void clear() {
-        final javax.persistence.Query persistentQuery =
+        final jakarta.persistence.Query persistentQuery =
                 this.entityManager.createNativeQuery( "DELETE FROM pagination_real_time WHERE updated_at <= \"" + ZonedDateTime.now( ZoneOffset.UTC ).minusMinutes( 10 ).toString().split( "\\." )[ 0 ] + "\"", RealTime.class );
 
         persistentQuery.executeUpdate();
@@ -129,7 +129,7 @@ public class PaginationHandlerImpl implements PaginationHandler {
 
 
     protected < T > List< T > executeDataQuery( final Query query, final Class< T > type ) {
-        final javax.persistence.Query persistentQuery =
+        final jakarta.persistence.Query persistentQuery =
                 this.entityManager.createNativeQuery( query.getDataQuery(), type );
 
 
@@ -144,7 +144,7 @@ public class PaginationHandlerImpl implements PaginationHandler {
     protected int executeCountQuery( final Query query ) {
         String countQuery = query.getCountQuery();
 
-        final javax.persistence.Query persistentQuery = this.entityManager.createNativeQuery( countQuery );
+        final jakarta.persistence.Query persistentQuery = this.entityManager.createNativeQuery( countQuery );
 
         String computedQuery = countQuery;
 

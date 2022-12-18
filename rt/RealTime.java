@@ -1,6 +1,7 @@
 package com.replace.replace.api.pagination.rt;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
+
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
