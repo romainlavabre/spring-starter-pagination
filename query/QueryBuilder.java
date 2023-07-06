@@ -30,7 +30,13 @@ public class QueryBuilder {
             if ( i == 0 ) {
                 sqlQuery.append( " " );
             } else {
-                sqlQuery.append( " AND " );
+                String mode = request.getQueryString( "mode" );
+
+                if ( !"include".equals( mode ) ) {
+                    sqlQuery.append( " AND " );
+                } else {
+                    sqlQuery.append( " OR " );
+                }
             }
 
             sqlQuery.append( condition.consume( i + 1 ) );
@@ -49,7 +55,7 @@ public class QueryBuilder {
             throw new NotSupportedValue( "per_page", limit );
         }
 
-        final int offset = Integer.parseInt( request.getQueryString( "per_page" ) ) * (Integer.parseInt( request.getQueryString( "page" ) ) - 1);
+        final int offset = Integer.parseInt( request.getQueryString( "per_page" ) ) * ( Integer.parseInt( request.getQueryString( "page" ) ) - 1 );
 
 
         sqlQuery.append( " " )
