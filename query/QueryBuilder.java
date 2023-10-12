@@ -8,6 +8,7 @@ import com.replace.replace.api.request.Request;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Romain Lavabre <romainlavabre98@gmail.com>
@@ -57,15 +58,18 @@ public class QueryBuilder {
 
         final int offset = Integer.parseInt( request.getQueryString( "per_page" ) ) * ( Integer.parseInt( request.getQueryString( "page" ) ) - 1 );
 
+        sqlQuery.append( " " );
 
-        sqlQuery.append( " " )
-                .append( "ORDER BY" )
-                .append( " " )
-                .append( sortBy.replace( " ", "" ) )
-                .append( " " )
-                .append( orderBy.toUpperCase().equals( "ASC" ) ? "ASC" : "DESC" )
-                .append( " " )
-                .append( "LIMIT" )
+        if ( !Objects.equals( sortBy, "NONE" ) ) {
+            sqlQuery.append( "ORDER BY" )
+                    .append( " " )
+                    .append( sortBy.replace( " ", "" ) )
+                    .append( " " )
+                    .append( orderBy.toUpperCase().equals( "ASC" ) ? "ASC" : "DESC" )
+                    .append( " " );
+        }
+
+        sqlQuery.append( "LIMIT" )
                 .append( " " )
                 .append( limit )
                 .append( " " )
