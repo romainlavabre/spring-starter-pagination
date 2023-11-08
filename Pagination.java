@@ -1,9 +1,9 @@
 package com.replace.replace.api.pagination;
 
-import com.replace.replace.api.json.Encoder;
-import com.replace.replace.api.json.annotation.Group;
-import com.replace.replace.api.json.annotation.Json;
-import com.replace.replace.configuration.json.GroupType;
+import com.fairfair.data_repository.api.json.Encoder;
+import com.fairfair.data_repository.api.json.annotation.Group;
+import com.fairfair.data_repository.api.json.annotation.Json;
+import com.fairfair.data_repository.configuration.json.GroupType;
 
 import java.util.List;
 import java.util.Map;

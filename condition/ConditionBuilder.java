@@ -1,6 +1,6 @@
 package com.replace.replace.api.pagination.condition;
 
-import com.replace.replace.api.request.Request;
+import com.fairfair.data_repository.api.request.Request;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;

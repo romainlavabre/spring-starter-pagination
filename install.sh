@@ -33,6 +33,13 @@ CLASSES=(
     "$1/condition/ConditionBuilder.java"
     "$1/rt/RealTime.java"
     "$1/rt/RealTimeJpa.java"
+    "$1/query/FileMode.java"
+    "$1/query/ViewMode.java"
+    "$1/query/file/QueryFileParser.java"
+    "$1/exception/FileError.java"
+    "$1/exception/NotSupportedDtoType.java"
+    "$1/annotation/ModeType.java"
+    "$1/annotation/Pagination.java"
 )
 
 for CLASS in "${CLASSES[@]}"; do

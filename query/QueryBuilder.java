@@ -1,88 +1,42 @@
 package com.replace.replace.api.pagination.query;
 
-import com.replace.replace.api.pagination.condition.Condition;
-import com.replace.replace.api.pagination.exception.NotSupportedKey;
-import com.replace.replace.api.pagination.exception.NotSupportedOperator;
-import com.replace.replace.api.pagination.exception.NotSupportedValue;
-import com.replace.replace.api.request.Request;
+import com.fairfair.data_repository.api.pagination.annotation.ModeType;
+import com.fairfair.data_repository.api.pagination.annotation.Pagination;
+import com.fairfair.data_repository.api.pagination.condition.Condition;
+import com.fairfair.data_repository.api.pagination.exception.*;
+import com.fairfair.data_repository.api.request.Request;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author Romain Lavabre <romainlavabre98@gmail.com>
  */
+@Service( "PaginationQueryBuilder" )
 public class QueryBuilder {
 
-    public static Query build( final Request request, final List< Condition > conditions, final String view )
-            throws NotSupportedKey, NotSupportedOperator, NotSupportedValue {
-        final Query query = new Query();
+    protected final ViewMode viewMode;
+    protected final FileMode fileMode;
 
-        final StringBuilder sqlQuery = new StringBuilder( "SELECT {SELECTED} FROM " + view );
 
-        if ( !conditions.isEmpty() ) {
-            sqlQuery.append( " WHERE" );
-        }
-
-        for ( int i = 0; i < conditions.size(); i++ ) {
-            final Condition condition = conditions.get( i );
-
-            if ( i == 0 ) {
-                sqlQuery.append( " " );
-            } else {
-                String mode = request.getQueryString( "mode" );
-
-                if ( !"include".equals( mode ) ) {
-                    sqlQuery.append( " AND " );
-                } else {
-                    sqlQuery.append( " OR " );
-                }
-            }
-
-            sqlQuery.append( condition.consume( i + 1 ) );
-
-            for ( final Map.Entry< String, String > entry : condition.getParameters().entrySet() ) {
-                query.addParameter( entry.getKey(), entry.getValue() );
-            }
-        }
-
-        query.setCountQuery( sqlQuery.toString().replace( "{SELECTED}", "COUNT(id)" ) );
-        final String sortBy  = request.getQueryString( "sortBy" );
-        final String orderBy = request.getQueryString( "orderBy" );
-        final String limit   = request.getQueryString( "per_page" );
-
-        if ( !limit.matches( "[0-9]+" ) ) {
-            throw new NotSupportedValue( "per_page", limit );
-        }
-
-        final int offset = Integer.parseInt( request.getQueryString( "per_page" ) ) * ( Integer.parseInt( request.getQueryString( "page" ) ) - 1 );
-
-        sqlQuery.append( " " );
-
-        if ( !Objects.equals( sortBy, "NONE" ) ) {
-            sqlQuery.append( "ORDER BY" )
-                    .append( " " )
-                    .append( sortBy.replace( " ", "" ) )
-                    .append( " " )
-                    .append( orderBy.toUpperCase().equals( "ASC" ) ? "ASC" : "DESC" )
-                    .append( " " );
-        }
-
-        sqlQuery.append( "LIMIT" )
-                .append( " " )
-                .append( limit )
-                .append( " " )
-                .append( "OFFSET" )
-                .append( " " )
-                .append( offset )
-                .append( " " )
-                .append( ";" );
-
-        query.setOffset( offset );
-        query.setLimit( Integer.parseInt( limit ) );
-        query.setDataQuery( sqlQuery.toString().replace( "{SELECTED}", "*" ) );
-
-        return query;
+    public QueryBuilder( ViewMode viewMode, FileMode fileMode ) {
+        this.viewMode = viewMode;
+        this.fileMode = fileMode;
     }
+
+
+    public Query build( final Request request, final List< Condition > conditions, Class< ? > dtoType )
+            throws NotSupportedKey, NotSupportedOperator, NotSupportedValue, NotSupportedDtoType, FileError {
+        Pagination pagination = dtoType.getDeclaredAnnotation( Pagination.class );
+
+        if ( pagination == null ) {
+            throw new NotSupportedDtoType();
+        }
+
+        return pagination.mode() == ModeType.VIEW
+                ? viewMode.get( request, conditions, pagination )
+                : fileMode.get( request, conditions, pagination );
+    }
+
+
 }

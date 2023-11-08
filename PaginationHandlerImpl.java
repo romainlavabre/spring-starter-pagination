@@ -1,17 +1,13 @@
 package com.replace.replace.api.pagination;
 
-import com.replace.replace.api.environment.Environment;
-import com.replace.replace.api.pagination.condition.Condition;
-import com.replace.replace.api.pagination.condition.ConditionBuilder;
-import com.replace.replace.api.pagination.exception.NotSupportedKey;
-import com.replace.replace.api.pagination.exception.NotSupportedOperator;
-import com.replace.replace.api.pagination.exception.NotSupportedValue;
-import com.replace.replace.api.pagination.query.Query;
-import com.replace.replace.api.pagination.query.QueryBuilder;
-import com.replace.replace.api.pagination.rt.RealTime;
-import com.replace.replace.api.pagination.rt.RealTimeJpa;
-import com.replace.replace.api.request.Request;
-import com.replace.replace.configuration.environment.Variable;
+import com.fairfair.data_repository.api.environment.Environment;
+import com.fairfair.data_repository.api.pagination.condition.Condition;
+import com.fairfair.data_repository.api.pagination.condition.ConditionBuilder;
+import com.fairfair.data_repository.api.pagination.exception.*;
+import com.fairfair.data_repository.api.pagination.query.Query;
+import com.fairfair.data_repository.api.pagination.query.QueryBuilder;
+import com.fairfair.data_repository.api.request.Request;
+import com.fairfair.data_repository.configuration.environment.Variable;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +16,6 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 
 /**
  * @author Romain Lavabre <romainlavabre98@gmail.com>
@@ -29,38 +24,37 @@ import java.util.StringJoiner;
 public class PaginationHandlerImpl implements PaginationHandler {
 
     protected final EntityManager             entityManager;
-    protected final RealTimeJpa               realTimeJpa;
     protected final Environment               environment;
+    protected final QueryBuilder              queryBuilder;
     protected final Map< String, QueryCount > COUNT_QUERY_CACHE = new HashMap<>();
 
 
-    public PaginationHandlerImpl( final EntityManager entityManager, RealTimeJpa realTimeJpa, Environment environment ) {
+    public PaginationHandlerImpl( final EntityManager entityManager, Environment environment, QueryBuilder queryBuilder ) {
         this.entityManager = entityManager;
-        this.realTimeJpa   = realTimeJpa;
         this.environment   = environment;
+        this.queryBuilder  = queryBuilder;
     }
 
 
     @Override
-    public < T > Pagination getResult( final Request request, final Class< T > dtoType, final String view )
-            throws NotSupportedOperator, NotSupportedKey, NotSupportedValue {
-
+    public < T > Pagination getResult( Request request, Class< T > dtoType ) throws NotSupportedOperator, NotSupportedKey, NotSupportedValue, NotSupportedDtoType, FileError {
         this.setDefaultRequiredValues( request );
 
         final List< Condition > conditions = ConditionBuilder.getConditions( request );
-        final Query             query      = QueryBuilder.build( request, conditions, view );
+        final Query             query      = queryBuilder.build( request, conditions, dtoType );
 
         final int perPage = Integer.parseInt( request.getQueryString( "perPage" ) != null ? request.getQueryString( "perPage" ) : request.getQueryString( "per_page" ) );
         final int page    = Integer.parseInt( request.getQueryString( "page" ) );
         final int offset  = this.getOffset( perPage, page );
 
         final Pagination pagination = new Pagination();
-        pagination.setPerPage( perPage )
-                  .setTotal( this.executeCountQuery( query ) )
-                  .setFrom( query.getOffset() + 1 )
-                  .setTo( query.getOffset() + query.getLimit() > pagination.getTotal() ? Integer.parseInt( String.valueOf( pagination.getTotal() ) ) : query.getOffset() + query.getLimit() )
-                  .setCurrentPage( page )
-                  .setLastPage( this.getLastPage( perPage, pagination.getTotal() ) );
+        pagination
+                .setPerPage( perPage )
+                .setTotal( this.executeCountQuery( query ) )
+                .setFrom( query.getOffset() + 1 )
+                .setTo( query.getOffset() + query.getLimit() > pagination.getTotal() ? Integer.parseInt( String.valueOf( pagination.getTotal() ) ) : query.getOffset() + query.getLimit() )
+                .setCurrentPage( page )
+                .setLastPage( this.getLastPage( perPage, pagination.getTotal() ) );
 
         query.setOffset( offset );
         query.setLimit( pagination.getTo() );
@@ -69,62 +63,6 @@ public class PaginationHandlerImpl implements PaginationHandler {
 
 
         return pagination;
-    }
-
-
-    @Override
-    public boolean hasBeenUpdated( Request request, List< String > followedTables ) {
-        String        superiorAt = ( String ) request.getParameter( "pagination_superior_at" );
-        StringBuilder query      = new StringBuilder( "SELECT * FROM pagination_real_time WHERE " );
-        StringJoiner  conditions = new StringJoiner( " OR " );
-        boolean       hasValue   = false;
-
-        for ( String table : followedTables ) {
-            List< Object > ids = request.getParameters( "pagination_" + table );
-
-            if ( ids == null || ids.size() == 0 ) {
-                continue;
-            }
-
-            if ( !hasValue ) {
-                hasValue = true;
-            }
-
-            StringJoiner stringJoiner = new StringJoiner( "," );
-
-            for ( Object id : ids ) {
-                id = id.toString().replaceAll( "[a-zA-Z ]", "" );
-                stringJoiner.add( id.toString() );
-            }
-
-            conditions.add( "( subject_table LIKE \"" + table.replace( " ", "" ) + "\" AND subject_id IN (" + stringJoiner.toString() + ") )" );
-        }
-
-        query
-                .append( "( " + conditions.toString() + " )" )
-                .append( " AND updated_at >= " )
-                .append( "\"" + superiorAt + "\"" )
-                .append( " LIMIT 1" );
-
-        if ( !hasValue ) {
-            return false;
-        }
-
-        final jakarta.persistence.Query persistentQuery =
-                this.entityManager.createNativeQuery( query.toString(), RealTime.class );
-
-        boolean result = persistentQuery.getResultList().size() == 1;
-        clear();
-
-        return result;
-    }
-
-
-    protected void clear() {
-        final jakarta.persistence.Query persistentQuery =
-                this.entityManager.createNativeQuery( "DELETE FROM pagination_real_time WHERE updated_at <= \"" + ZonedDateTime.now( ZoneOffset.UTC ).minusMinutes( 10 ).toString().split( "\\." )[ 0 ] + "\"", RealTime.class );
-
-        persistentQuery.executeUpdate();
     }
 
 
@@ -196,12 +134,12 @@ public class PaginationHandlerImpl implements PaginationHandler {
             request.setQueryString( "page", "1" );
         }
 
-        if ( request.getQueryString( "orderBy" ) == null ) {
-            request.setQueryString( "orderBy", "DESC" );
+        if ( request.getQueryString( "orderBy" ) == null && request.getQueryString( "order_by" ) == null ) {
+            request.setQueryString( "order_by", "DESC" );
         }
 
-        if ( request.getQueryString( "sortBy" ) == null ) {
-            request.setQueryString( "sortBy", "id" );
+        if ( request.getQueryString( "sortBy" ) == null && request.getQueryString( "sort_by" ) == null ) {
+            request.setQueryString( "sort_by", "id" );
         }
     }
 

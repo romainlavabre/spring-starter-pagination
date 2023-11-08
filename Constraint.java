@@ -1,6 +1,6 @@
 package com.replace.replace.api.pagination;
 
-import com.replace.replace.api.pagination.exception.NotSupportedKey;
+import com.fairfair.data_repository.api.pagination.exception.NotSupportedKey;
 
 /**
  * @author Romain Lavabre <romainlavabre98@gmail.com>

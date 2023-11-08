@@ -1,8 +1,8 @@
 package com.replace.replace.api.pagination.condition;
 
-import com.replace.replace.api.pagination.Constraint;
-import com.replace.replace.api.pagination.exception.NotSupportedKey;
-import com.replace.replace.api.pagination.exception.NotSupportedOperator;
+import com.fairfair.data_repository.api.pagination.Constraint;
+import com.fairfair.data_repository.api.pagination.exception.NotSupportedKey;
+import com.fairfair.data_repository.api.pagination.exception.NotSupportedOperator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,6 +53,11 @@ public class Condition {
     }
 
 
+    public String getKey() {
+        return this.key;
+    }
+
+
     public boolean isOperator( final String operator ) {
         return this.operator.equals( operator );
     }
@@ -68,7 +73,7 @@ public class Condition {
     }
 
 
-    public String consume( final int startIncrement ) throws NotSupportedOperator, NotSupportedKey {
+    public String consume( final int startIncrement, String customKey ) throws NotSupportedOperator, NotSupportedKey {
 
         Constraint.assertValidKey( this.key );
 
@@ -81,9 +86,9 @@ public class Condition {
 
                 if ( !isFunction( operator ) ) {
                     final String operator = this.getSqlOperator( this.values.get( i ), parameter );
-                    condition.append( this.key + " " + operator + " " + this.getParameter( this.values.get( i ), operator, parameter ) );
+                    condition.append( ( customKey != null ? customKey : this.key ) + " " + operator + " " + this.getParameter( this.values.get( i ), operator, parameter ) );
                 } else {
-                    condition.append( getFunction( values.get( i ), parameter ) );
+                    condition.append( getFunction( values.get( i ), parameter, customKey ) );
                 }
 
 
@@ -96,8 +101,8 @@ public class Condition {
         }
 
         return !isFunction( operator )
-                ? this.key + " " + this.getSqlOperator( this.values.get( 0 ), "key" + keyIncrement ) + " " + this.getParameter( this.values.get( 0 ), this.operator, "key" + keyIncrement )
-                : getFunction( values.get( 0 ), "key" + keyIncrement );
+                ? ( customKey != null ? customKey : this.key ) + " " + this.getSqlOperator( this.values.get( 0 ), "key" + keyIncrement ) + " " + this.getParameter( this.values.get( 0 ), this.operator, "key" + keyIncrement )
+                : getFunction( values.get( 0 ), "key" + keyIncrement, customKey );
     }
 
 
@@ -134,13 +139,13 @@ public class Condition {
     }
 
 
-    private String getFunction( String value, String parameter ) throws NotSupportedOperator {
+    private String getFunction( String value, String parameter, String customKey ) throws NotSupportedOperator {
         if ( !Condition.OPERATOR.containsKey( this.operator ) ) {
             throw new NotSupportedOperator( this.operator );
         }
 
         this.parameters.put( parameter, value );
-        return Condition.OPERATOR.get( this.operator ).replace( "{column}", this.key ).replace( "{value}", ":" + parameter );
+        return Condition.OPERATOR.get( this.operator ).replace( "{column}", customKey != null ? customKey : this.key ).replace( "{value}", ":" + parameter );
     }
 
 
